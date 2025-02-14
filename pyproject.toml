@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "Bartender-Bot"
+requires-python = "== 3.11.*"
+dependencies = [
+    "aiohttp==3.9.1",
+    "aiodns==3.1.1",
+    "yarl==1.18.3",
+    "multidict==6.1.0",
+    "discord.py==2.4.0",
+    "beautifulsoup4==4.13.3",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "isort==5.13.2",
+    "black==24.4.2",
+    "pyright==1.1.394",
+    "pre-commit==3.7.1"
+]
+
+[tool.hatch.version]
+path = "hordes/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/"]
+
+[tool.black]
+line-length = 125
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+combine_as_imports = true
+combine_star = true
+line_length = 125
+
+[tool.pyright]
+include = ["src/"]
+exclude = ["**/__pycache__"]
+reportUnknownParameterType = "error"
+reportUnknownVariableType = "error"
+reportUnknownArgumentType = "error"
+reportUnusedVariable = "error"
+reportUnusedImport = "error"
+reportMissingParameterType = 'none'
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
