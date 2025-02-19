@@ -12,6 +12,7 @@ dependencies = [
     "multidict==6.1.0",
     "discord.py==2.4.0",
     "beautifulsoup4==4.13.3",
+    "aiosqlite==0.21.0",
 ]
 dynamic = ["version"]
 
@@ -42,11 +43,7 @@ line_length = 125
 [tool.pyright]
 include = ["src/"]
 exclude = ["**/__pycache__"]
-reportUnknownParameterType = "error"
-reportUnknownVariableType = "error"
-reportUnknownArgumentType = "error"
-reportUnusedVariable = "error"
-reportUnusedImport = "error"
+reportUnnecessaryIsInstance = 'none'
 reportMissingParameterType = 'none'
 pythonVersion = "3.11"
 typeCheckingMode = "strict"

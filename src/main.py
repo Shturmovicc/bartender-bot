@@ -3,26 +3,32 @@ import logging
 import logging.handlers
 import os
 from pathlib import Path
+from sqlite3 import PARSE_DECLTYPES
 from typing import Any
 
+import aiosqlite
 import discord
 from aiohttp import ClientSession, CookieJar
 from discord.ext import commands
 
 import config
+from database import Database
 
 logger = logging.getLogger(__name__)
 
 
 class CustomBot(commands.Bot):
-    def __init__(self, *args: Any, web_session: ClientSession, **kwargs: Any):
+    def __init__(self, *args: Any, web_session: ClientSession, db_connection: aiosqlite.Connection, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.web_session = web_session
+        self.database = Database(db_connection)
 
     async def setup_hook(self) -> None:
         for file in os.listdir(Path(__file__).parent / Path('cogs')):
             if file.endswith('.py'):
                 await self.load_extension(f'cogs.{file[:-3]}')
+
+        await self.database.init()
 
     async def on_ready(self):
         assert self.user
@@ -50,12 +56,16 @@ async def main():
 
     cookies = CookieJar()
 
-    async with ClientSession(cookie_jar=cookies) as web_session:
+    async with (
+        ClientSession(cookie_jar=cookies) as web_session,
+        aiosqlite.connect(config.DB_PATH, detect_types=PARSE_DECLTYPES) as db_connection,
+    ):
         async with CustomBot(
             command_prefix='!',
             intents=intents,
             help_command=None,
             web_session=web_session,
+            db_connection=db_connection,
         ) as bot:
             await bot.start(config.TOKEN)
 
