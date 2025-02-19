@@ -96,7 +96,7 @@ class Search(commands.GroupCog, group_name='search'):
         full='Display full info about ingredient, defaults to False.',
     )
     @app_commands.command(name='ingredient', description='Search for ingredient.')
-    @cog_logging_wrapper(logger=logger)
+    @cog_logging_wrapper(logger=logger, skip_errors=(NotFoundError,))
     async def search_ingredient(self, interaction: discord.Interaction, name: str, full: bool = False) -> None:
         data = await self.bot.database.get_ingredient(name)
 
