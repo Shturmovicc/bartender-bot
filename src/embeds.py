@@ -279,4 +279,5 @@ def search_result_embed(items: list[Drink] | list[Ingredient], *, full: bool = F
 
         rows.append((name, value))
 
-    return _paginate(embed, rows, style='fields', max_page_items=10 if not full else 5)
+    style = 'fields' if full else 'description'
+    return _paginate(embed, rows, style=style, max_page_items=10 if not full else 5)
