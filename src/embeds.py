@@ -7,6 +7,7 @@ from discord import Color, Embed, Member, User
 from yarl import URL
 
 from database.models import Drink, DrinkIngredient, Glass, Ingredient, UserDrink, UserGlass, UserIngredient
+from emojis import Emojis, random_drink_emoji, random_fruit_emoji
 
 
 class PaginationView(discord.ui.View):
@@ -30,7 +31,7 @@ class PaginationView(discord.ui.View):
             for button in self.children:
                 self.remove_item(button)
 
-    @discord.ui.button(emoji='\u2B05', style=discord.ButtonStyle.blurple)
+    @discord.ui.button(emoji=Emojis.ARROW_LEFT, style=discord.ButtonStyle.blurple)
     async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button['PaginationView']):
         self.index -= 1
         if self.index < 0:
@@ -38,11 +39,11 @@ class PaginationView(discord.ui.View):
 
         await self.set_page(interaction, self.index)
 
-    @discord.ui.button(emoji='\u25aa', style=discord.ButtonStyle.grey)
+    @discord.ui.button(label=Emojis.ZERO_WIDTH_SPACE, style=discord.ButtonStyle.grey, disabled=True)
     async def placeholder(self, interaction: discord.Interaction, button: discord.ui.Button['PaginationView']):
         await interaction.response.pong()
 
-    @discord.ui.button(emoji='\u27A1', style=discord.ButtonStyle.blurple)
+    @discord.ui.button(emoji=Emojis.ARROW_RIGHT, style=discord.ButtonStyle.blurple)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button['PaginationView']):
         self.index += 1
         if self.index + 1 > len(self.pages):
@@ -151,7 +152,8 @@ def _drink_info(item: Drink, *, delimiter: str = '\n', prefix: str = '') -> str:
 
 
 def drink_embed(item: Drink, glass: Glass, ingredients: list[DrinkIngredient], full: bool = False) -> Embed:
-    embed = Embed(title=item.name, color=_random_color(seed=item.name))
+    emoji = random_drink_emoji(item.name)
+    embed = Embed(title=f'{emoji} {item.name}', color=_random_color(seed=item.name))
     embed.set_image(url=item.thumbnail)
     embed.set_footer(text=_drink_info(item, delimiter=' | '))
 
@@ -183,8 +185,9 @@ def glass_embed(item: Glass) -> Embed:
 def ingredient_embed(item: Ingredient, style: Literal['thumbnail', 'image'] = 'thumbnail', full: bool = False) -> Embed:
     description = _shorten_text(item.description, 500) if item.description and not full else item.description
 
+    emoji = random_fruit_emoji(item.name) if item.alcohol is False else random_drink_emoji(item.name)
     embed = Embed(
-        title=item.name,
+        title=f'{emoji} {item.name}',
         description=_shorten_text(description, 4090, False) if description else description,
         color=_random_color(seed=item.name),
     )
@@ -200,8 +203,8 @@ def ingredient_embed(item: Ingredient, style: Literal['thumbnail', 'image'] = 't
 
 
 def _base_inventory_embed(target: Member | User, type: str) -> Embed:
-    embed = Embed(title=f'{target.display_name}\'s {type} inventory:')
-    embed.set_author(name=target.name, icon_url=target.display_avatar)
+    emoji = Emojis.BACKPACK
+    embed = Embed(title=f'{emoji} {target.display_name}\'s {type} inventory:')
     embed.set_footer(text=f'ID: {target.id}')
 
     return embed
@@ -265,8 +268,9 @@ def available_crafts_embed(user: Member | User, items: list[Drink]) -> list[Embe
 
 
 def search_result_embed(items: list[Drink] | list[Ingredient], *, full: bool = False) -> list[Embed]:
+    emoji = Emojis.MAGNIFYING_GLASS
     embed = Embed(
-        title='Search results:',
+        title=f'{emoji} Search results:',
         color=discord.Color.from_rgb(18, 181, 105),
     )
 
