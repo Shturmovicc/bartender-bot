@@ -1,6 +1,6 @@
 import logging
 import random
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import discord
 from discord import Embed, app_commands
@@ -9,6 +9,7 @@ from discord.ext import commands
 import config
 from database.models import Drink, Glass, Ingredient
 from embeds import drink_embed, glass_embed, ingredient_embed
+from typedefs import ItemType
 from utils import cog_logging_wrapper
 
 if TYPE_CHECKING:
@@ -17,18 +18,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 Data = Drink | Glass | Ingredient
-DataType = Literal['drink', 'glass', 'ingredient']
 
 
-def get_random_type() -> DataType:
+def get_random_type() -> ItemType:
     percent = random.randint(0, 100)
 
     if percent > 10:
-        return 'ingredient'
+        return ItemType.INGREDIENT
     elif percent > 0:
-        return 'glass'
+        return ItemType.GLASS
     else:
-        return 'drink'
+        return ItemType.DRINK
 
 
 class Rolls(commands.Cog):
@@ -39,33 +39,33 @@ class Rolls(commands.Cog):
     async def on_ready(self):
         print(f'{__name__} - loaded.')
 
-    async def get_random_data(self, type: DataType) -> Data:
-        if type == 'ingredient':
+    async def get_random_data(self, type: ItemType) -> Data:
+        if type == ItemType.INGREDIENT:
             data = await self.bot.database.get_random_ingredient()
-        elif type == 'glass':
+        elif type == ItemType.GLASS:
             data = await self.bot.database.get_random_glass()
-        elif type == 'drink':
+        elif type == ItemType.DRINK:
             data = await self.bot.database.get_random_drink()
 
         assert data
         return data
 
-    async def get_current_data(self, type: DataType, user: int):
-        if type == 'ingredient':
+    async def get_current_data(self, type: ItemType, user: int):
+        if type == ItemType.INGREDIENT:
             data = await self.bot.database.get_user_ingredients(user)
-        elif type == 'glass':
+        elif type == ItemType.GLASS:
             data = await self.bot.database.get_user_glasses(user)
-        elif type == 'drink':
+        elif type == ItemType.DRINK:
             data = await self.bot.database.get_user_drinks(user)
 
         return data
 
-    async def set_data(self, type: DataType, user_id: int, id: int, amount: float) -> None:
-        if type == 'ingredient':
+    async def set_data(self, type: ItemType, user_id: int, id: int, amount: float) -> None:
+        if type == ItemType.INGREDIENT:
             await self.bot.database.set_user_ingredient(user_id, id, amount)
-        elif type == 'glass':
+        elif type == ItemType.GLASS:
             await self.bot.database.set_user_glass(user_id, id, amount)
-        elif type == 'drink':
+        elif type == ItemType.DRINK:
             await self.bot.database.set_user_drink(user_id, id, amount)
 
     async def get_data_embed(self, data: Data) -> Embed:
