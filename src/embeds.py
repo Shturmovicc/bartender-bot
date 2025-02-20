@@ -156,7 +156,12 @@ def drink_embed(item: Drink, glass: Glass, ingredients: list[DrinkIngredient], f
     embed.set_footer(text=_drink_info(item, delimiter=' | '))
 
     embed.add_field(name='Glass:', value=glass.name, inline=False)
-    embed.add_field(name='Ingredients:', value='\n'.join([f'\\- {i.measure} {i.name}' for i in ingredients]))
+
+    ingredient_strings: list[str] = []
+    for ingredient in ingredients:
+        measure = f"{ingredient.measure} " if ingredient.measure else ""
+        ingredient_strings.append(f'\\- {measure}{ingredient.name}')
+    embed.add_field(name='Ingredients:', value='\n'.join(ingredient_strings))
 
     if full:
         if item.tags:

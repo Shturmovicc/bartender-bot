@@ -41,7 +41,7 @@ class Ingredient:
 
 @dataclass(slots=True)
 class DrinkIngredient(Ingredient):
-    measure: str
+    measure: str | None
 
 
 @dataclass(slots=True)
