@@ -2,7 +2,7 @@ import datetime
 import sqlite3
 from datetime import datetime
 from types import TracebackType
-from typing import Optional, Self, Sequence, TypeVar
+from typing import Optional, Self, Sequence
 
 import aiosqlite
 
@@ -15,9 +15,6 @@ __all__ = (
     'Database',
 )
 # fmt: on
-
-
-ContainerT = TypeVar('ContainerT', bound=object)
 
 
 class Database(DrinksMixin, GlassesMixin, IngredientsMixin, UsersMixin):
