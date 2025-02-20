@@ -69,20 +69,30 @@ class Database(DrinksMixin, GlassesMixin, IngredientsMixin, UsersMixin):
 
         return await self._fetchall(DrinkIngredient, query, (id,))
 
-    async def search_drinks(self, ingredients: Sequence[int], glass: Optional[int] = None) -> list[Drink]:
+    async def search_drinks(
+        self,
+        name: Optional[str] = None,
+        ingredients: Sequence[int] = (),
+        glass: Optional[int] = None,
+    ) -> list[Drink]:
         query = f"""
         SELECT d.id, d.name, d.name_alternate, d.tags, d.category, d.alcoholic, d.glass, d.instructions, d.thumbnail
         FROM drinks AS d
         {f'JOIN drink_ingredients AS di ON di.drink_id = d.id AND di.ingredient_id in ({",".join("?" for _ in ingredients)})' if ingredients else ''}
-        {'WHERE d.glass = ?' if glass else ''}
+        {'WHERE' if name or glass else ''}
+        {'d.name LIKE ?' if name else ''}
+        {'AND' if name and glass else ''}
+        {'d.glass=?' if glass else ''}
         GROUP BY d.id
         {'HAVING COUNT(DISTINCT di.ingredient_id) >= ?' if ingredients else ''}
         ORDER BY d.name;
         """
 
-        params: list[int] = []
+        params: list[str | int] = []
         if ingredients:
             params.extend(ingredients)
+        if name:
+            params.append(f'%{name}%')
         if glass:
             params.append(glass)
         if ingredients:

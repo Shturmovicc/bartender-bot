@@ -26,9 +26,9 @@ class Search(commands.GroupCog, group_name='search'):
 
     @app_commands.rename(ingredient_name='ingredient', glass_name='glass')
     @app_commands.describe(
-        name='Name or ID of drink, takes priority over `ingredient` and `glass`.',
-        ingredient_name='Name or ID of ingredients separated by comma that will be used in search, cannot be used with `name`.',
-        glass_name='Name or ID of glass that will be used in search, cannot be used with `name`.',
+        name='Name or ID of drink.',
+        ingredient_name='Name or ID of ingredients separated by comma that will be used in search.',
+        glass_name='Name or ID of glass that will be used in search.',
         full='Display full info about drink, defaults to False.',
     )
     @app_commands.command(name='drink', description='Search for drink.')
@@ -41,17 +41,41 @@ class Search(commands.GroupCog, group_name='search'):
         glass_name: Optional[str],
         full: bool = False,
     ) -> None:
-        if isinstance(name, str):
-            data = await self.bot.database.get_drink(name)
+        if not name and not ingredient_name and not glass_name:
+            raise ArgumentError('At least one have to be specified: "name", "ingredient" or "glass"')
 
-            if not data:
-                raise NotFoundError(f'No drinks with ID or name {name!r} been found.')
-            elif isinstance(data, list):
-                embeds = search_result_embed(data, full=full)
-                view = PaginationView(embeds, interaction.user)
-                message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
-                view.message = message
-                return
+        ingredients: list[int] = []
+
+        if ingredient_name:
+            for i in ingredient_name.split(','):
+                if not i:
+                    continue
+
+                ingredient = await self.bot.database.get_ingredient(i)
+
+                if not ingredient:
+                    raise NotFoundError(f'No ingredients with ID or name {i!r} been found.')
+                elif isinstance(ingredient, list):
+                    ingredient = ingredient[0]
+
+                ingredients.append(ingredient.id)
+
+        if glass_name:
+            glass = await self.bot.database.get_glass(glass_name)
+
+            if not glass:
+                raise NotFoundError(f'No glasses with ID or name {glass_name!r} been found.')
+            elif isinstance(glass, list):
+                glass = glass[0]
+
+            glass_id = glass.id
+        else:
+            glass_id = None
+
+        drinks = await self.bot.database.search_drinks(name, ingredients, glass_id)
+
+        if len(drinks) == 1:
+            data = drinks[0]
 
             glass = await self.bot.database.get_glass_by_id(data.glass)
 
@@ -62,45 +86,12 @@ class Search(commands.GroupCog, group_name='search'):
             embed = drink_embed(data, glass, ingredient_data, full=full)
 
             await interaction.followup.send(embed=embed)
-
-        elif isinstance(ingredient_name, str) or isinstance(glass_name, str):
-            ingredients: list[int] = []
-
-            if ingredient_name:
-                for i in ingredient_name.split(','):
-                    if not i:
-                        continue
-
-                    ingredient = await self.bot.database.get_ingredient(i)
-
-                    if not ingredient:
-                        raise NotFoundError(f'No ingredients with ID or name {i!r} been found.')
-                    elif isinstance(ingredient, list):
-                        ingredient = ingredient[0]
-
-                    ingredients.append(ingredient.id)
-
-            if glass_name:
-                glass = await self.bot.database.get_glass(glass_name)
-                if not glass:
-                    raise NotFoundError(f'No glasses with ID or name {glass_name!r} been found.')
-                elif isinstance(glass, list):
-                    glass = glass[0]
-
-                glass_id = glass.id
-            else:
-                glass_id = None
-
-            drinks = await self.bot.database.search_drinks(ingredients, glass_id)
-
+        else:
             embeds = search_result_embed(drinks, full=full)
             view = PaginationView(embeds, interaction.user)
 
             message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
             view.message = message
-
-        else:
-            raise ArgumentError('Either `name` or `ingredient` have to be specified.')
 
     @app_commands.describe(
         name='Name or ID of ingredient.',
