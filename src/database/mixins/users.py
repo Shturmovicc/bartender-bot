@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
-from ..models import UserDrink, UserGlass, UserIngredient
+from typedefs import ItemType
+
+from ..models import UserDrink, UserGlass, UserIngredient, UserSetItemSignature
 from .base import Mixin
 
 # fmt: off
@@ -25,7 +27,7 @@ class UsersMixin(Mixin):
         SELECT id, name, name_alternate, tags, category, alcoholic, glass, instructions, thumbnail, amount
         FROM drink_inventory
         LEFT JOIN drinks ON drink_inventory.drink_id = drinks.id
-        WHERE user_id=?
+        WHERE user_id=? AND amount > 0
         ORDER BY amount DESC, name;
         """
 
@@ -36,7 +38,7 @@ class UsersMixin(Mixin):
         SELECT id, name, amount
         FROM glass_inventory
         LEFT JOIN glasses ON glass_inventory.glass_id = glasses.id
-        WHERE user_id=?
+        WHERE user_id=? AND amount > 0
         ORDER BY amount DESC, name;
         """
 
@@ -47,80 +49,35 @@ class UsersMixin(Mixin):
         SELECT id, name, description, type, alcohol, amount
         FROM ingredient_inventory
         LEFT JOIN ingredients ON ingredient_inventory.ingredient_id = ingredients.id
-        WHERE user_id=?
+        WHERE user_id=? AND amount > 0
         ORDER BY amount DESC, name;
         """
 
         return await self._fetchall(UserIngredient, query, (id,))
 
-    async def _set_user_drink(self, user_id: int, drink_id: int, amount: float) -> None:
-        query = """
-        INSERT INTO drink_inventory (user_id, drink_id, amount, modified)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT(user_id, drink_id) DO UPDATE SET
+    async def _set_user_item(self, type: ItemType, *values: UserSetItemSignature) -> None:
+        if not values:
+            raise ValueError('Not values been provided.')
+
+        query = f"""
+        INSERT INTO {type}_inventory (user_id, {type}_id, amount, modified)
+        VALUES {','.join(['(?, ?, ?, ?)' for _ in values])}
+        ON CONFLICT(user_id, {type}_id) DO UPDATE SET
             amount = excluded.amount, modified = excluded.modified;
         """
 
-        await self.connection.execute(query, (user_id, drink_id, amount, datetime.now(tz=timezone.utc)))
+        utcnow = datetime.now(tz=timezone.utc)
+        params: list[int | float | datetime] = []
+        for value in values:
+            params.extend((value.user_id, value.item_id, value.amount, utcnow))
 
-    async def _delete_user_drink(self, user_id: int, drink_id: int) -> None:
-        query = """
-        DELETE FROM drink_inventory
-        WHERE user_id = ? AND drink_id = ?;
-        """
+        await self.connection.execute(query, params)
 
-        await self.connection.execute(query, (user_id, drink_id))
+    async def set_user_drinks(self, *values: UserSetItemSignature) -> None:
+        return await self._set_user_item(ItemType.DRINK, *values)
 
-    async def set_user_drink(self, user_id: int, drink_id: int, amount: float) -> None:
-        if amount > 0:
-            await self._set_user_drink(user_id, drink_id, amount)
-        else:
-            await self._delete_user_drink(user_id, drink_id)
+    async def set_user_glasses(self, *values: UserSetItemSignature) -> None:
+        return await self._set_user_item(ItemType.GLASS, *values)
 
-    async def _set_user_glass(self, user_id: int, glass_id: int, amount: float) -> None:
-        query = """
-        INSERT INTO glass_inventory (user_id, glass_id, amount, modified)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT(user_id, glass_id) DO UPDATE SET
-            amount = excluded.amount, modified = excluded.modified;
-        """
-
-        await self.connection.execute(query, (user_id, glass_id, amount, datetime.now(tz=timezone.utc)))
-
-    async def _delete_user_glass(self, user_id: int, glass_id: int) -> None:
-        query = """
-        DELETE FROM glass_inventory
-        WHERE user_id = ? AND glass_id = ?;
-        """
-
-        await self.connection.execute(query, (user_id, glass_id))
-
-    async def set_user_glass(self, user_id: int, glass_id: int, amount: float) -> None:
-        if amount > 0:
-            await self._set_user_glass(user_id, glass_id, amount)
-        else:
-            await self._delete_user_glass(user_id, glass_id)
-
-    async def _set_user_ingredient(self, user_id: int, ingredient_id: int, amount: float) -> None:
-        query = """
-        INSERT INTO ingredient_inventory (user_id, ingredient_id, amount, modified)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT(user_id, ingredient_id) DO UPDATE SET
-            amount = excluded.amount, modified = excluded.modified;
-        """
-
-        await self.connection.execute(query, (user_id, ingredient_id, amount, datetime.now(tz=timezone.utc)))
-
-    async def _delete_user_ingredient(self, user_id: int, ingredient_id: int) -> None:
-        query = """
-        DELETE FROM ingredient_inventory
-        WHERE user_id = ? AND ingredient_id = ?;
-        """
-
-        await self.connection.execute(query, (user_id, ingredient_id))
-
-    async def set_user_ingredient(self, user_id: int, ingredient_id: int, amount: float) -> None:
-        if amount > 0:
-            await self._set_user_ingredient(user_id, ingredient_id, amount)
-        else:
-            await self._delete_user_ingredient(user_id, ingredient_id)
+    async def set_user_ingredients(self, *values: UserSetItemSignature) -> None:
+        return await self._set_user_item(ItemType.INGREDIENT, *values)

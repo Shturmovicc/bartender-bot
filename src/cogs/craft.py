@@ -6,7 +6,7 @@ from discord import Member, User, app_commands
 from discord.ext import commands
 
 import config
-from database.models import UserGlass, UserIngredient
+from database.models import UserGlass, UserIngredient, UserSetItemSignature
 from embeds import PaginationView, available_crafts_embed, drink_embed, search_result_embed
 from exceptions import MissingGlassError, MissingIngredientError, NotFoundError
 from utils import cog_logging_wrapper
@@ -122,13 +122,21 @@ class Craft(commands.Cog):
             amount, glass_exists, ingredients_exist = await check()
 
             async with self.bot.database:
-                await self.bot.database.set_user_drink(interaction.user.id, drink.id, amount=amount)
+                await self.bot.database.set_user_drinks(
+                    UserSetItemSignature(interaction.user.id, drink.id, amount=amount),
+                )
 
-                await self.bot.database.set_user_glass(interaction.user.id, glass_exists.id, glass_exists.amount - 1)
+                await self.bot.database.set_user_glasses(
+                    UserSetItemSignature(interaction.user.id, glass_exists.id, amount=glass_exists.amount - 1),
+                )
 
+                ingredient_set_items: list[UserSetItemSignature] = []
                 for ingredient in ingredients_exist:
                     ingredient_amount = ingredient.amount - 1
-                    await self.bot.database.set_user_ingredient(interaction.user.id, ingredient.id, amount=ingredient_amount)
+                    ingredient_set_items.append(
+                        UserSetItemSignature(interaction.user.id, ingredient.id, ingredient_amount),
+                    )
+                await self.bot.database.set_user_ingredients(*ingredient_set_items)
 
             return amount
 

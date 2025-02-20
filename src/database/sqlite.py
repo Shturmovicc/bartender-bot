@@ -108,7 +108,7 @@ class Database(DrinksMixin, GlassesMixin, IngredientsMixin, UsersMixin):
             SELECT di.drink_id, ii.user_id, COUNT(DISTINCT di.ingredient_id) AS matched_count
             FROM drink_ingredients AS di
             JOIN ingredient_inventory AS ii ON di.ingredient_id = ii.ingredient_id
-            WHERE user_id = ?
+            WHERE user_id = ? AND ii.amount > 0
             GROUP BY di.drink_id, ii.user_id
         )
         SELECT d.id, d.name, d.name_alternate, d.tags, d.category, d.alcoholic, d.glass, d.instructions, d.thumbnail

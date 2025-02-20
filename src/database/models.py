@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 
 @dataclass(slots=True)
+class UserSetItemSignature:
+    user_id: int
+    item_id: int
+    amount: float
+
+
+@dataclass(slots=True)
 class Drink:
     id: int
     name: str

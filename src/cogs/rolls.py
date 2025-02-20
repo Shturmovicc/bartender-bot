@@ -7,7 +7,7 @@ from discord import Embed, app_commands
 from discord.ext import commands
 
 import config
-from database.models import Drink, Glass, Ingredient
+from database.models import Drink, Glass, Ingredient, UserSetItemSignature
 from embeds import drink_embed, glass_embed, ingredient_embed
 from typedefs import ItemType
 from utils import cog_logging_wrapper
@@ -60,13 +60,13 @@ class Rolls(commands.Cog):
 
         return data
 
-    async def set_data(self, type: ItemType, user_id: int, id: int, amount: float) -> None:
+    async def set_data(self, type: ItemType, item: UserSetItemSignature) -> None:
         if type == ItemType.INGREDIENT:
-            await self.bot.database.set_user_ingredient(user_id, id, amount)
+            await self.bot.database.set_user_ingredients(item)
         elif type == ItemType.GLASS:
-            await self.bot.database.set_user_glass(user_id, id, amount)
+            await self.bot.database.set_user_glasses(item)
         elif type == ItemType.DRINK:
-            await self.bot.database.set_user_drink(user_id, id, amount)
+            await self.bot.database.set_user_drinks(item)
 
     async def get_data_embed(self, data: Data) -> Embed:
         if isinstance(data, Ingredient):
@@ -104,7 +104,8 @@ class Rolls(commands.Cog):
             else:
                 amount = 1.0
 
-            await self.set_data(type, user_id=interaction.user.id, id=data.id, amount=amount)
+            item = UserSetItemSignature(user_id=interaction.user.id, item_id=data.id, amount=amount)
+            await self.set_data(type, item)
 
         if isinstance(amount, float) and amount.is_integer():
             amount = int(amount)
