@@ -3,6 +3,12 @@ from datetime import datetime, timezone
 from ..models import UserDrink, UserGlass, UserIngredient
 from .base import Mixin
 
+# fmt: off
+__all__ = (
+    'UsersMixin',
+)
+# fmt: on
+
 
 class UsersMixin(Mixin):
     async def create_user(self, id: int, name: str) -> None:
