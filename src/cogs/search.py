@@ -46,6 +46,12 @@ class Search(commands.GroupCog, group_name='search'):
 
             if not data:
                 raise NotFoundError(f'No drinks with ID or name {name!r} been found.')
+            elif isinstance(data, list):
+                embeds = search_result_embed(data, full=full)
+                view = PaginationView(embeds, interaction.user)
+                message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
+                view.message = message
+                return
 
             glass = await self.bot.database.get_glass_by_id(data.glass)
 
@@ -69,6 +75,8 @@ class Search(commands.GroupCog, group_name='search'):
 
                     if not ingredient:
                         raise NotFoundError(f'No ingredients with ID or name {i!r} been found.')
+                    elif isinstance(ingredient, list):
+                        ingredient = ingredient[0]
 
                     ingredients.append(ingredient.id)
 
@@ -76,6 +84,9 @@ class Search(commands.GroupCog, group_name='search'):
                 glass = await self.bot.database.get_glass(glass_name)
                 if not glass:
                     raise NotFoundError(f'No glasses with ID or name {glass_name!r} been found.')
+                elif isinstance(glass, list):
+                    glass = glass[0]
+
                 glass_id = glass.id
             else:
                 glass_id = None
@@ -100,11 +111,17 @@ class Search(commands.GroupCog, group_name='search'):
     async def search_ingredient(self, interaction: discord.Interaction, name: str, full: bool = False) -> None:
         data = await self.bot.database.get_ingredient(name)
 
-        if data:
+        if not data:
+            raise NotFoundError(f'No ingredients with ID or name {name!r} been found.')
+
+        elif isinstance(data, list):
+            embeds = search_result_embed(data, full=full)
+            view = PaginationView(embeds, interaction.user)
+            message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
+            view.message = message
+        else:
             embed = ingredient_embed(data, full=full)
             await interaction.followup.send(embed=embed)
-        else:
-            raise NotFoundError(f'No ingredients with ID or name {name!r} been found.')
 
 
 async def setup(bot: 'CustomBot'):

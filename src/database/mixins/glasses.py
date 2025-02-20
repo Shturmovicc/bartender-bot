@@ -23,14 +23,14 @@ class GlassesMixin(Mixin):
 
         return row
 
-    async def get_glass_by_name(self, name: str) -> Glass | None:
+    async def get_glass_by_name(self, name: str) -> list[Glass]:
         query = """
         SELECT id, name
         FROM glasses
-        WHERE name=? COLLATE NOCASE;
+        WHERE name LIKE ?;
         """
 
-        return await self._fetchone(Glass, query, (name,))
+        return await self._fetchall(Glass, query, (f'%{name}%',))
 
     async def get_glass_by_id(self, id: int) -> Glass | None:
         query = """
@@ -41,13 +41,20 @@ class GlassesMixin(Mixin):
 
         return await self._fetchone(Glass, query, (id,))
 
-    async def get_glass(self, name_or_id: str | int) -> Glass | None:
+    async def get_glass(self, name_or_id: str | int) -> list[Glass] | Glass | None:
         if isinstance(name_or_id, str):
             if name_or_id.isdigit():
-                return await self.get_glass_by_id(int(name_or_id))
-            return await self.get_glass_by_name(name_or_id.strip())
+                item = await self.get_glass_by_id(int(name_or_id))
+            item = await self.get_glass_by_name(name_or_id.strip())
         else:
-            return await self.get_glass_by_id(name_or_id)
+            item = await self.get_glass_by_id(name_or_id)
+
+        if not item:
+            return None
+        elif isinstance(item, list) and len(item) == 1:
+            return item[0]
+
+        return item
 
     async def get_random_glass(self) -> Glass | None:
         query = """

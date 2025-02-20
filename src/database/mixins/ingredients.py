@@ -26,14 +26,14 @@ class IngredientsMixin(Mixin):
 
         await self.connection.execute(query, (id, name, description, type, alcohol))
 
-    async def get_ingredient_by_name(self, name: str) -> Ingredient | None:
+    async def get_ingredient_by_name(self, name: str) -> list[Ingredient]:
         query = """
         SELECT id, name, description, type, alcohol
         FROM ingredients
-        WHERE name=? COLLATE NOCASE;
+        WHERE name LIKE ?;
         """
 
-        return await self._fetchone(Ingredient, query, (name,))
+        return await self._fetchall(Ingredient, query, (f'%{name}%',))
 
     async def get_ingredient_by_id(self, id: int) -> Ingredient | None:
         query = """
@@ -44,13 +44,20 @@ class IngredientsMixin(Mixin):
 
         return await self._fetchone(Ingredient, query, (id,))
 
-    async def get_ingredient(self, name_or_id: str | int) -> Ingredient | None:
+    async def get_ingredient(self, name_or_id: str | int) -> list[Ingredient] | Ingredient | None:
         if isinstance(name_or_id, str):
             if name_or_id.isdigit():
-                return await self.get_ingredient_by_id(int(name_or_id))
-            return await self.get_ingredient_by_name(name_or_id.strip())
+                item = await self.get_ingredient_by_id(int(name_or_id))
+            item = await self.get_ingredient_by_name(name_or_id.strip())
         else:
-            return await self.get_ingredient_by_id(name_or_id)
+            item = await self.get_ingredient_by_id(name_or_id)
+
+        if not item:
+            return None
+        elif isinstance(item, list) and len(item) == 1:
+            return item[0]
+
+        return item
 
     async def get_random_ingredient(self) -> Ingredient | None:
         query = """

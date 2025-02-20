@@ -126,12 +126,12 @@ def _strip_amount(amount: int | float) -> int | float:
     return int(amount) if isinstance(amount, float) and amount.is_integer() else amount
 
 
-def _ingredient_info(item: Ingredient, *, delimiter: str = ' | ') -> str:
+def _ingredient_info(item: Ingredient, *, delimiter: str = '\n', prefix: str = '') -> str:
     return f'{delimiter}'.join(
         [
-            f'ID: {item.id}',
-            f'Type: {item.type}',
-            f'Alcohol: {item.alcohol}',
+            f'{prefix}ID: {item.id}',
+            f'{prefix}Type: {item.type}',
+            f'{prefix}Alcohol: {item.alcohol}',
         ]
     )
 
@@ -189,7 +189,7 @@ def ingredient_embed(item: Ingredient, style: Literal['thumbnail', 'image'] = 't
     elif style == 'image':
         embed.set_image(url=_ingredient_image_url(item))
 
-    embed.set_footer(text=_ingredient_info(item))
+    embed.set_footer(text=_ingredient_info(item, delimiter=' | '))
 
     return embed
 
@@ -259,7 +259,7 @@ def available_crafts_embed(user: Member | User, items: list[Drink]) -> list[Embe
     return _paginate(embed, rows, style='fields', max_page_items=5)
 
 
-def search_result_embed(items: list[Drink], full: bool = False) -> list[Embed]:
+def search_result_embed(items: list[Drink] | list[Ingredient], *, full: bool = False) -> list[Embed]:
     embed = Embed(
         title='Search results:',
         color=discord.Color.from_rgb(18, 181, 105),
@@ -267,7 +267,16 @@ def search_result_embed(items: list[Drink], full: bool = False) -> list[Embed]:
 
     rows: list[tuple[str, str]] = []
     for item in items:
-        value = _drink_info(item, prefix="> ") if full else ''
-        rows.append((f'\u25aa {item.name}', value))
+        name = f'\u25aa {item.name}'
+
+        if isinstance(item, Drink) and full:
+            value = _drink_info(item, prefix="> ")
+        elif isinstance(item, Ingredient) and full:
+            value = _ingredient_info(item, prefix="> ")
+        else:
+            name += f' ({item.id})'
+            value = ''
+
+        rows.append((name, value))
 
     return _paginate(embed, rows, style='fields', max_page_items=10 if not full else 5)

@@ -7,7 +7,7 @@ from discord.ext import commands
 
 import config
 from database.models import UserGlass, UserIngredient
-from embeds import PaginationView, available_crafts_embed, drink_embed
+from embeds import PaginationView, available_crafts_embed, drink_embed, search_result_embed
 from exceptions import MissingGlassError, MissingIngredientError, NotFoundError
 from utils import cog_logging_wrapper
 
@@ -76,11 +76,17 @@ class Craft(commands.Cog):
             message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
             view.message = message
             return
-        else:
-            drink = await self.bot.database.get_drink(name)
 
+        drink = await self.bot.database.get_drink(name)
         if not drink:
             raise NotFoundError('Drink not found.')
+        elif isinstance(drink, list):
+            msg = '`Found more than 1 drink with this name.`\n`Try using full name or ID.`'
+            embeds = search_result_embed(drink, full=False)
+            view = PaginationView(embeds, interaction.user, timeout=300)
+            message = await interaction.followup.send(msg, embed=embeds[0], view=view, wait=True)
+            view.message = message
+            return
 
         glass = await self.bot.database.get_glass_by_id(drink.glass)
         assert glass

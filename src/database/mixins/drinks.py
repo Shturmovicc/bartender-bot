@@ -32,14 +32,14 @@ class DrinksMixin(Mixin):
             query, (id, name, name_alternate, tags, category, alcoholic, glass, instructions, thumbnail)
         )
 
-    async def get_drink_by_name(self, name: str) -> Drink | None:
+    async def get_drink_by_name(self, name: str) -> list[Drink]:
         query = """
         SELECT id, name, name_alternate, tags, category, alcoholic, glass, instructions, thumbnail
         FROM drinks
-        WHERE name=? COLLATE NOCASE;
+        WHERE name LIKE ?;
         """
 
-        return await self._fetchone(Drink, query, (name,))
+        return await self._fetchall(Drink, query, (f'%{name}%',))
 
     async def get_drink_by_id(self, id: int) -> Drink | None:
         query = """
@@ -50,13 +50,20 @@ class DrinksMixin(Mixin):
 
         return await self._fetchone(Drink, query, (id,))
 
-    async def get_drink(self, name_or_id: str | int) -> Drink | None:
+    async def get_drink(self, name_or_id: str | int) -> list[Drink] | Drink | None:
         if isinstance(name_or_id, str):
             if name_or_id.isdigit():
-                return await self.get_drink_by_id(int(name_or_id))
-            return await self.get_drink_by_name(name_or_id.strip())
+                item = await self.get_drink_by_id(int(name_or_id))
+            item = await self.get_drink_by_name(name_or_id.strip())
         else:
-            return await self.get_drink_by_id(name_or_id)
+            item = await self.get_drink_by_id(name_or_id)
+
+        if not item:
+            return None
+        elif isinstance(item, list) and len(item) == 1:
+            return item[0]
+
+        return item
 
     async def get_random_drink(self) -> Drink | None:
         query = """
