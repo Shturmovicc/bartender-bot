@@ -88,7 +88,7 @@ class Search(commands.GroupCog, group_name='search'):
             await interaction.followup.send(embed=embed)
         else:
             embeds = search_result_embed(drinks, full=full)
-            view = PaginationView(embeds, interaction.user)
+            view = PaginationView(embeds, interaction.user, timeout=300)
 
             message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
             view.message = message
@@ -107,7 +107,7 @@ class Search(commands.GroupCog, group_name='search'):
 
         elif isinstance(data, list):
             embeds = search_result_embed(data, full=full)
-            view = PaginationView(embeds, interaction.user)
+            view = PaginationView(embeds, interaction.user, timeout=300)
             message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
             view.message = message
         else:
