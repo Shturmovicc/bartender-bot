@@ -48,7 +48,8 @@ class IngredientsMixin(Mixin):
         if isinstance(name_or_id, str):
             if name_or_id.isdigit():
                 item = await self.get_ingredient_by_id(int(name_or_id))
-            item = await self.get_ingredient_by_name(name_or_id.strip())
+            else:
+                item = await self.get_ingredient_by_name(name_or_id.strip())
         else:
             item = await self.get_ingredient_by_id(name_or_id)
 
