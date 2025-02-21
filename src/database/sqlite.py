@@ -6,6 +6,8 @@ from typing import Optional, Self, Sequence
 
 import aiosqlite
 
+from typedefs import ItemType
+
 from .init import INIT_QUERY
 from .mixins import DrinksMixin, GlassesMixin, IngredientsMixin, UsersMixin
 from .models import Drink, DrinkIngredient
@@ -40,6 +42,27 @@ class Database(DrinksMixin, GlassesMixin, IngredientsMixin, UsersMixin):
     async def init(self) -> None:
         await self.connection.executescript(INIT_QUERY)
         await self.connection.commit()
+
+    async def get_random_item(self, type: ItemType):
+        if type == ItemType.INGREDIENT:
+            data = await self.get_random_ingredient()
+        elif type == ItemType.GLASS:
+            data = await self.get_random_glass()
+        elif type == ItemType.DRINK:
+            data = await self.get_random_drink()
+
+        assert data
+        return data
+
+    async def get_item(self, type: ItemType, name_or_id: str | int):
+        if type == ItemType.INGREDIENT:
+            data = await self.get_ingredient(name_or_id)
+        elif type == ItemType.GLASS:
+            data = await self.get_glass(name_or_id)
+        elif type == ItemType.DRINK:
+            data = await self.get_drink(name_or_id)
+
+        return data
 
     async def insert_drink_ingredient(self, drink_id: int, ingredient_id: int, measure: Optional[str]) -> None:
         query = """

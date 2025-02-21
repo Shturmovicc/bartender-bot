@@ -39,35 +39,6 @@ class Rolls(commands.Cog):
     async def on_ready(self):
         print(f'{__name__} - loaded.')
 
-    async def get_random_data(self, type: ItemType) -> Data:
-        if type == ItemType.INGREDIENT:
-            data = await self.bot.database.get_random_ingredient()
-        elif type == ItemType.GLASS:
-            data = await self.bot.database.get_random_glass()
-        elif type == ItemType.DRINK:
-            data = await self.bot.database.get_random_drink()
-
-        assert data
-        return data
-
-    async def get_current_data(self, type: ItemType, user: int):
-        if type == ItemType.INGREDIENT:
-            data = await self.bot.database.get_user_ingredients(user)
-        elif type == ItemType.GLASS:
-            data = await self.bot.database.get_user_glasses(user)
-        elif type == ItemType.DRINK:
-            data = await self.bot.database.get_user_drinks(user)
-
-        return data
-
-    async def set_data(self, type: ItemType, item: UserSetItemSignature) -> None:
-        if type == ItemType.INGREDIENT:
-            await self.bot.database.set_user_ingredients(item)
-        elif type == ItemType.GLASS:
-            await self.bot.database.set_user_glasses(item)
-        elif type == ItemType.DRINK:
-            await self.bot.database.set_user_drinks(item)
-
     async def get_data_embed(self, data: Data) -> Embed:
         if isinstance(data, Ingredient):
             embed = ingredient_embed(data, style='image')
@@ -90,12 +61,12 @@ class Rolls(commands.Cog):
     async def roll(self, interaction: discord.Interaction) -> None:
         type = get_random_type()
 
-        data = await self.get_random_data(type)
+        data = await self.bot.database.get_random_item(type)
 
         async with self.bot.database:
             await self.bot.database.create_user(interaction.user.id, interaction.user.name)
 
-            current = await self.get_current_data(type, interaction.user.id)
+            current = await self.bot.database.get_user_items(type, interaction.user.id)
 
             exists = next(filter(lambda i: i.id == data.id, current), None)
 
@@ -105,7 +76,7 @@ class Rolls(commands.Cog):
                 amount = 1.0
 
             item = UserSetItemSignature(user_id=interaction.user.id, item_id=data.id, amount=amount)
-            await self.set_data(type, item)
+            await self.bot.database.set_user_items(type, item)
 
         if isinstance(amount, float) and amount.is_integer():
             amount = int(amount)

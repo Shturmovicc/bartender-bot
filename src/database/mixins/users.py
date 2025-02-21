@@ -55,7 +55,17 @@ class UsersMixin(Mixin):
 
         return await self._fetchall(UserIngredient, query, (id,))
 
-    async def _set_user_item(self, type: ItemType, *values: UserSetItemSignature) -> None:
+    async def get_user_items(self, type: ItemType, id: int) -> list[UserDrink] | list[UserGlass] | list[UserIngredient]:
+        if type == ItemType.INGREDIENT:
+            data = await self.get_user_ingredients(id)
+        elif type == ItemType.GLASS:
+            data = await self.get_user_glasses(id)
+        elif type == ItemType.DRINK:
+            data = await self.get_user_drinks(id)
+
+        return data
+
+    async def set_user_items(self, type: ItemType, *values: UserSetItemSignature) -> None:
         if not values:
             raise ValueError('Not values been provided.')
 
@@ -74,10 +84,10 @@ class UsersMixin(Mixin):
         await self.connection.execute(query, params)
 
     async def set_user_drinks(self, *values: UserSetItemSignature) -> None:
-        return await self._set_user_item(ItemType.DRINK, *values)
+        return await self.set_user_items(ItemType.DRINK, *values)
 
     async def set_user_glasses(self, *values: UserSetItemSignature) -> None:
-        return await self._set_user_item(ItemType.GLASS, *values)
+        return await self.set_user_items(ItemType.GLASS, *values)
 
     async def set_user_ingredients(self, *values: UserSetItemSignature) -> None:
-        return await self._set_user_item(ItemType.INGREDIENT, *values)
+        return await self.set_user_items(ItemType.INGREDIENT, *values)
