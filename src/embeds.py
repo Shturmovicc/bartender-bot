@@ -245,7 +245,7 @@ def ingredient_inventory_embed(target: Member | User, items: list[UserIngredient
         amount = _strip_amount(item.amount)
         # value = [f'ID: {item.id}', f'Type: {item.type}', f'Alcohol: {item.alcohol}']
 
-        rows.append(('', f'- x{amount} {item.name}'))  #'\n'.join(value)))
+        rows.append(('', f'- x{amount} {item.name} ({item.id})'))  #'\n'.join(value)))
 
     return _paginate(base, rows, max_page_items=10)
 
