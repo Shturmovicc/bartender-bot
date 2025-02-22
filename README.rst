@@ -11,6 +11,7 @@ Features
 - Drink crafting from ingredients.
 - Ingredients, drinks and glasses inventory.
 - Random rolls system with ingredients, glasses and drinks.
+- Trading with other users.
 
 Commands
 --------
