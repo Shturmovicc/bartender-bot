@@ -1,12 +1,13 @@
 import math
 import random
+from datetime import datetime
 from typing import Any, Literal, Optional, Sequence
 
 import discord
 from discord import Color, Embed, Member, User
 from yarl import URL
 
-from database.models import Drink, DrinkIngredient, Glass, Ingredient, UserDrink, UserGlass, UserIngredient
+from database.models import Drink, DrinkIngredient, Glass, Ingredient, UserDrink, UserGlass, UserIngredient, UserInventory
 from emojis import Emojis, random_drink_emoji, random_fruit_emoji
 
 
@@ -290,3 +291,32 @@ def search_result_embed(items: list[Drink] | list[Ingredient], *, full: bool = F
 
     style = 'fields' if full else 'description'
     return _paginate(embed, rows, style=style, max_page_items=10 if not full else 5)
+
+
+def _trade_offer_field(inventory: UserInventory) -> str:
+    field_names = ('Drinks', 'Glasses', 'Ingredients')
+
+    strings: list[str] = []
+    for name, values in zip(field_names, inventory):
+        if not values:
+            continue
+        strings.append(f'{Emojis.BLACK_SMALL_SQUARE} {name}:')
+        for value in values.values():
+            strings.append(f'> x{value.amount} {value.name} ({value.id})')
+
+    return '\n'.join(strings)
+
+
+def trade_offer_embed(user: Member | User, *, offer: UserInventory, request: UserInventory) -> Embed:
+    embed = Embed(
+        title=f'{Emojis.HANDSHAKE} Trade offer:',
+        color=discord.Color.from_rgb(245, 212, 0),
+        timestamp=datetime.now(),
+    )
+    embed.set_author(name=user.name, icon_url=user.display_avatar)
+    embed.set_footer(text=f'ID: {user.id}')
+
+    embed.add_field(name='Offer:', value=_trade_offer_field(offer), inline=False)
+    embed.add_field(name='Request:', value=_trade_offer_field(request), inline=False)
+
+    return embed

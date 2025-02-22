@@ -1,9 +1,11 @@
 import functools
 from logging import Logger
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 import discord
 from discord.ext import commands
+
+from typedefs import KT, VT
 
 
 def cog_logging_wrapper(*, logger: Logger, skip_errors: tuple[type[Exception], ...] = ()):
@@ -28,3 +30,8 @@ def cog_logging_wrapper(*, logger: Logger, skip_errors: tuple[type[Exception], .
         return wrapper
 
     return decorator
+
+
+def reverse_dict(d: dict[KT, Sequence[VT]]) -> dict[VT, KT]:
+    """Swaps dict `key` and `value` list to `value`:`key` for each `value` in `value` Sequence."""
+    return {value: key for key, values in d.items() for value in values}

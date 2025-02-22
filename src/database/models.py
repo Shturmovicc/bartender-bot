@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import NamedTuple
 
 
 @dataclass(slots=True)
@@ -54,3 +55,9 @@ class DrinkIngredient(Ingredient):
 @dataclass(slots=True)
 class UserIngredient(Ingredient):
     amount: float
+
+
+class UserInventory(NamedTuple):  # NamedTuple instead of dataclass for easier comparison.
+    drinks: dict[int, UserDrink]
+    glasses: dict[int, UserGlass]
+    ingredients: dict[int, UserIngredient]

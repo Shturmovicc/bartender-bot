@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from typedefs import ItemType
 
-from ..models import UserDrink, UserGlass, UserIngredient, UserSetItemSignature
+from ..models import UserDrink, UserGlass, UserIngredient, UserInventory, UserSetItemSignature
 from .base import Mixin
 
 # fmt: off
@@ -91,3 +91,17 @@ class UsersMixin(Mixin):
 
     async def set_user_ingredients(self, *values: UserSetItemSignature) -> None:
         return await self.set_user_items(ItemType.INGREDIENT, *values)
+
+    async def get_user_inventory(self, id: int) -> UserInventory:
+        return UserInventory(
+            await self.get_user_drinks(id),
+            await self.get_user_glasses(id),
+            await self.get_user_ingredients(id),
+        )
+
+    async def set_user_inventory(self, id: int, inventory: UserInventory) -> None:
+        for i, type in enumerate(ItemType):
+            if not inventory[i]:
+                continue
+
+            await self.set_user_items(type, *(UserSetItemSignature(id, i.id, i.amount) for i in inventory[i].values()))

@@ -39,6 +39,10 @@ class Emojis(StrEnum):
     MAGNIFYING_GLASS = '\uD83D\uDD0D'
     BACKPACK = '\uD83C\uDF92'
 
+    CROSS_MARK = '\u274C'
+    CHECK_MARK = '\u2705'
+    HANDSHAKE = '\uD83E\uDD1D'
+
 
 def random_fruit_emoji(seed: Optional[str] = None) -> str:
     random.seed(seed)
