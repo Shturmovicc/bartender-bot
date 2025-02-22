@@ -14,7 +14,8 @@ def cog_logging_wrapper(*, logger: Logger, skip_errors: tuple[type[Exception], .
 
             await interaction.response.defer()
 
-            logger.info(f'{interaction.user.name}:{interaction.user.id} used {interaction.command.name}')
+            user = interaction.user
+            logger.info(f'{user.name}:{user.id} used {interaction.command.qualified_name} with {kwargs}')
             try:
                 await func(self, interaction, *args, **kwargs)
             except skip_errors as error:
