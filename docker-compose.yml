@@ -1,0 +1,12 @@
+services:
+  bot:
+    image: bot
+    restart: unless-stopped
+    env_file:
+      - preset.env
+      - .env
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./src/database.sqlite:/app/database.sqlite:rw

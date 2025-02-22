@@ -3,6 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
+version = "0.1.0"
 name = "Bartender-Bot"
 requires-python = "== 3.11.*"
 dependencies = [
@@ -14,7 +15,6 @@ dependencies = [
     "beautifulsoup4==4.13.3",
     "aiosqlite==0.21.0",
 ]
-dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
@@ -23,9 +23,6 @@ dev = [
     "pyright==1.1.394",
     "pre-commit==3.7.1"
 ]
-
-[tool.hatch.version]
-path = "src/__about__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/"]
