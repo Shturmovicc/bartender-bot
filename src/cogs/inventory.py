@@ -30,7 +30,7 @@ class Inventory(commands.GroupCog, group_name='inventory'):
         target = user or interaction.user
 
         items = await self.bot.database.get_user_drinks(target.id)
-        embeds = drink_inventory_embed(target, items)
+        embeds = drink_inventory_embed(target, list(items.values()))
 
         view = PaginationView(embeds, interaction.user, timeout=300)
         message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
@@ -43,7 +43,7 @@ class Inventory(commands.GroupCog, group_name='inventory'):
         target = user or interaction.user
 
         items = await self.bot.database.get_user_glasses(target.id)
-        embeds = glass_inventory_embed(target, items)
+        embeds = glass_inventory_embed(target, list(items.values()))
 
         view = PaginationView(embeds, interaction.user, timeout=300)
         message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)
@@ -56,7 +56,7 @@ class Inventory(commands.GroupCog, group_name='inventory'):
         target = user or interaction.user
 
         items = await self.bot.database.get_user_ingredients(target.id)
-        embeds = ingredient_inventory_embed(target, items)
+        embeds = ingredient_inventory_embed(target, list(items.values()))
 
         view = PaginationView(embeds, interaction.user, timeout=300)
         message = await interaction.followup.send(embed=embeds[0], view=view, wait=True)

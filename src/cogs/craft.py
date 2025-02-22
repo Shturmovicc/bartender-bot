@@ -94,14 +94,14 @@ class Craft(commands.Cog):
         ingredients = await self.bot.database.get_drink_ingredients(drink.id)
         ingredient_ids = {i.id for i in ingredients}
 
-        async def check() -> tuple[float, UserGlass, list[UserIngredient]]:
+        async def check() -> tuple[float, UserGlass, dict[int, UserIngredient]]:
             user_drinks = await self.bot.database.get_user_drinks(interaction.user.id)
             user_glasses = await self.bot.database.get_user_glasses(interaction.user.id)
             user_ingredients = await self.bot.database.get_user_ingredients(interaction.user.id)
 
-            drink_exists = next(filter(lambda i: i.id == drink.id, user_drinks), None)
-            glass_exists = next(filter(lambda i: i.id == drink.glass, user_glasses), None)
-            ingredients_exist = list(filter(lambda i: i.id in ingredient_ids, user_ingredients))
+            drink_exists = user_drinks.get(drink.id)
+            glass_exists = user_glasses.get(drink.glass)
+            ingredients_exist = {item.id: item for item in user_ingredients.values() if item.id in ingredient_ids}
 
             if drink_exists:
                 amount = drink_exists.amount + 1
@@ -112,8 +112,7 @@ class Craft(commands.Cog):
                 raise MissingGlassError('You are missing glass to make this drink!')
 
             if len(ingredients_exist) != len(ingredient_ids):
-                ingredients_exist_ids = [i.id for i in ingredients_exist]
-                msg = "\n".join([f'{i.name}' for i in ingredients if i.id not in ingredients_exist_ids])
+                msg = "\n".join([f'{i.name}' for i in ingredients if i.id not in ingredients_exist])
                 raise MissingIngredientError(f'\n{msg}')
 
             return amount, glass_exists, ingredients_exist
@@ -131,7 +130,7 @@ class Craft(commands.Cog):
                 )
 
                 ingredient_set_items: list[UserSetItemSignature] = []
-                for ingredient in ingredients_exist:
+                for ingredient in ingredients_exist.values():
                     ingredient_amount = ingredient.amount - 1
                     ingredient_set_items.append(
                         UserSetItemSignature(interaction.user.id, ingredient.id, ingredient_amount),

@@ -68,7 +68,7 @@ class Rolls(commands.Cog):
 
             current = await self.bot.database.get_user_items(type, interaction.user.id)
 
-            exists = next(filter(lambda i: i.id == data.id, current), None)
+            exists = current.get(data.id)
 
             if exists:
                 amount = exists.amount + 1

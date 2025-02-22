@@ -22,7 +22,7 @@ class UsersMixin(Mixin):
 
         await self.connection.execute(query, (id, name, datetime.now(tz=timezone.utc)))
 
-    async def get_user_drinks(self, id: int) -> list[UserDrink]:
+    async def get_user_drinks(self, id: int) -> dict[int, UserDrink]:
         query = """
         SELECT id, name, name_alternate, tags, category, alcoholic, glass, instructions, thumbnail, amount
         FROM drink_inventory
@@ -31,9 +31,9 @@ class UsersMixin(Mixin):
         ORDER BY amount DESC, name;
         """
 
-        return await self._fetchall(UserDrink, query, (id,))
+        return {item.id: item for item in await self._fetchall(UserDrink, query, (id,))}
 
-    async def get_user_glasses(self, id: int) -> list[UserGlass]:
+    async def get_user_glasses(self, id: int) -> dict[int, UserGlass]:
         query = """
         SELECT id, name, amount
         FROM glass_inventory
@@ -42,9 +42,9 @@ class UsersMixin(Mixin):
         ORDER BY amount DESC, name;
         """
 
-        return await self._fetchall(UserGlass, query, (id,))
+        return {item.id: item for item in await self._fetchall(UserGlass, query, (id,))}
 
-    async def get_user_ingredients(self, id: int) -> list[UserIngredient]:
+    async def get_user_ingredients(self, id: int) -> dict[int, UserIngredient]:
         query = """
         SELECT id, name, description, type, alcohol, amount
         FROM ingredient_inventory
@@ -53,9 +53,9 @@ class UsersMixin(Mixin):
         ORDER BY amount DESC, name;
         """
 
-        return await self._fetchall(UserIngredient, query, (id,))
+        return {item.id: item for item in await self._fetchall(UserIngredient, query, (id,))}
 
-    async def get_user_items(self, type: ItemType, id: int) -> list[UserDrink] | list[UserGlass] | list[UserIngredient]:
+    async def get_user_items(self, type: ItemType, id: int):
         if type == ItemType.INGREDIENT:
             data = await self.get_user_ingredients(id)
         elif type == ItemType.GLASS:
