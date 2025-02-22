@@ -230,7 +230,7 @@ def glass_inventory_embed(target: Member | User, items: list[UserGlass]) -> list
 
     rows: list[tuple[str, str]] = []
     for item in items:
-        rows.append(('', f'- x{item.amount} {item.name}'))
+        rows.append(('', f'- x{item.amount} {item.name} ({item.id})'))
 
     return _paginate(base, rows, max_page_items=10)
 
